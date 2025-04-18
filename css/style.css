@@ -1,0 +1,53 @@
+/* css/style.css */
+
+/* Fond de page et police générale */
+body {
+    background-color: #f0f2f5;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Style pour le container principal */
+  .container {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Titres et paragraphes */
+  h1 {
+    font-weight: bold;
+    color: #333333;
+    margin-bottom: 20px;
+  }
+  
+  p {
+    font-size: 1.1em;
+    margin-bottom: 20px;
+  }
+  
+  /* Masquage du mot à deviner */
+  #masked-word {
+    font-size: 1.5em;
+    letter-spacing: 0.3em;
+    color: #555555;
+  }
+  
+  /* Style des indices */
+  #hint {
+    font-style: italic;
+    color: #888888;
+  }
+  
+  /* Style pour le bouton Valider */
+  #submit-btn {
+    padding: 10px 20px;
+    font-size: 1.1em;
+  }
+  
+  /* Style pour les messages de feedback */
+  .alert {
+    margin-top: 10px;
+    font-size: 1em;
+  }
+  
