@@ -1,5 +1,4 @@
 <?php
-// Change content type to HTML for game pages
 header('Content-Type: text/html');
 
 $game_type = isset($segments[1]) ? $segments[1] : '';
