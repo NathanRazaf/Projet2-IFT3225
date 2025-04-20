@@ -50,4 +50,16 @@ body {
     margin-top: 10px;
     font-size: 1em;
   }
-  
+  /* ====== Spécifique au jeu "définitions" ====== */
+#word {
+  text-decoration: underline dotted;
+}
+
+textarea.definition-field {
+  resize: vertical;
+  min-height: 3rem;
+}
+
+.was-validated .form-control:invalid {
+  border-color: #dc3545; 
+}

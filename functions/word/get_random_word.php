@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../utilities/db_conn.php';  
 // Get a language parameter if provided
 $language = isset($_GET['language']) ? $_GET['language'] : null;
 
