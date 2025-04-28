@@ -23,13 +23,6 @@ if ($player === 'add' && isset($segments[2]) && isset($segments[3])) {
 
     include __DIR__ . '/../functions/gamers/logout_player.php';
     exit;
-} else if ($player === 'score' && isset($segments[2]) && isset($segments[3])) {
-    // POST /gamers/score/{joueur}/{score} - Update player score
-    $joueur = $segments[2];
-    $score = $segments[3];
-
-    include __DIR__ . '/../functions/gamers/add_score.php';
-    exit;
 } else {
     // GET /gamers/{joueur} - Get player info
     $joueur = $player;

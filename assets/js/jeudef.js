@@ -1,121 +1,104 @@
 (() => {
-
-    /* config -------------------------------------------------------------- */
-    const LANG   = new URLSearchParams(location.search).get('lg')   ?? 'fr';
-    const LIMIT = parseInt(
-        new URLSearchParams(location.search).get('time'),
-        10
-     ) || 60;
     const $timer = document.getElementById('time-left');
-    const $word  = document.getElementById('word');
-    const $form  = document.getElementById('def-form');
-    const $wrap  = document.getElementById('inputs-wrapper');
-    const $add   = document.getElementById('add-field');
+    const $word = document.getElementById('word');
+    const $form = document.getElementById('def-form');
+    const $defField = document.getElementById('definition-field');
     const $score = document.getElementById('points-earned');
-    const $res   = document.getElementById('result');
+    const $res = document.getElementById('result');
 
-    let wordId      = null;
-    let points      = 0;
-    let secondsLeft = LIMIT;
+    let wordId = null;
+    let points = 0;
+    let secondsLeft = LIMIT; // Use PHP-passed LIMIT
     let timer;
 
-    /* helpers ------------------------------------------------------------- */
-    const createField = () => {
-        const idx = $wrap.children.length + 1;
-        const group = document.createElement('div');
-        group.className = 'mb-3';
-        group.innerHTML = `
-            <label class="form-label">Définition ${idx}</label>
-            <textarea required
-                      minlength="5"
-                      maxlength="200"
-                      class="form-control definition-field"
-                      name="def[]"
-                      placeholder="Ta définition…"></textarea>`;
-        $wrap.appendChild(group);
-    };
-
     const startTimer = () => {
-        $timer.textContent = secondsLeft;  
+        $timer.textContent = secondsLeft;
         timer = setInterval(() => {
             secondsLeft--;
             $timer.textContent = secondsLeft;
-            $timer.textContent = secondsLeft;
             if (secondsLeft <= 0) {
                 clearInterval(timer);
-                $form.requestSubmit();     
+                showFinalResult();
+                $form.classList.add('d-none'); // Hide the form when time is up
             }
         }, 1000);
     };
 
     const fetchWord = async () => {
         try {
-            const r   = await fetch(`/functions/word/get_random_word.php?language=${LANG}`);
-            const arr = await r.json();   
-            if (!Array.isArray(arr) || arr.length === 0) {
-                throw new Error('empty array');
-            }
-            const js  = arr[0];          
-    
-            wordId = js.id;
-            $word.textContent = js.word.toUpperCase();
+            // Get player_id from cookies
+            const cookies = document.cookie.split(';');
+            const playerId = cookies.find(cookie => cookie.trim().startsWith('player_id='));
+            const playerIdValue = playerId ? playerId.split('=')[1] : null;
+            if (!playerIdValue) throw new Error('Player ID not found in cookies');
+            await fetch(`/api/score/${playerIdValue}/0`); // To add 1 to his play count
+            const response = await fetch(`/word/random?language=${LANG}`);
+            const [wordData] = await response.json();
+            if (!wordData) throw new Error('No words found');
+
+            wordId = wordData.id;
+            $word.textContent = wordData.word.toUpperCase();
         } catch (err) {
             console.error(err);
-            alert("Impossible de récupérer un mot. Réessaie plus tard.");
+            alert(err.message);
         }
     };
-    
-    
 
-    const postDefinitions = async (defs) => {
+    const postDefinition = async (definition) => {
         try {
-            const r = await fetch('/functions/word/submit_def.php', {
-                method : 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body   : JSON.stringify({ wordId, definitions: defs })
+            const response = await fetch('/api/add_def', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ word: $word.textContent.toLowerCase(), new_def: definition })
             });
-            return await r.json();   
+            return await response.json();
         } catch (err) {
             console.error(err);
-            return { points: 0 };
+            return { status: 'error', message: 'Failed to submit definition', points: 0 };
         }
     };
 
-    /* init ---------------------------------------------------------------- */
+    const showFinalResult = () => {
+        $res.textContent = `🎉 Bravo ! Tu as gagné ${points} points au total.`;
+        $res.classList.remove('d-none');
+        $res.classList.remove('alert-success');
+        $res.classList.add('alert-info');
+    };
+
     window.addEventListener('DOMContentLoaded', async () => {
-        createField();
         await fetchWord();
         startTimer();
     });
 
-    /* events -------------------------------------------------------------- */
-    $add.addEventListener('click', () => createField());
-
     $form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        $form.classList.add('was-validated');
         if (!$form.checkValidity()) return;
 
-        const defs = [...$form.querySelectorAll('textarea')]
-                      .map(t => t.value.trim())
-                      .filter(t => t.length >= 5 && t.length <= 200);
+        const definition = $defField.value.trim();
+        if (definition.length < 5) return;
 
-        if (defs.length === 0) {
-            alert("Ajoute au moins une définition !");
-            return;
+        const res = await postDefinition(definition);
+        if (res.status === 'success') {
+            points += 5;
+            $score.textContent = points;
+
+            // Show success message
+            $res.textContent = `Définition ajoutée ! +5 points. Tu peux continuer à ajouter des définitions jusqu'à la fin du temps.`;
+            $res.classList.remove('d-none');
+            $res.classList.remove('alert-info');
+            $res.classList.add('alert-success');
+
+            // Clear the field for the next definition
+            $defField.value = '';
+            $defField.focus();
+        } else {
+            $res.textContent = `Erreur : ${res.message}`;
+            $res.classList.remove('d-none');
+            $res.classList.remove('alert-success');
+            $res.classList.add('alert-danger');
+            setTimeout(() => {
+                $res.classList.add('d-none');
+            }, 3000);
         }
-
-        clearInterval(timer);   
-
-        const res = await postDefinitions(defs);
-        points    = res.points ?? 0;
-        $score.textContent = points;
-
-        // feedback
-        $res.textContent = `🎉 Bravo ! Tu as gagné ${points} points.`;
-        $res.classList.remove('d-none');
-        $form.querySelectorAll('textarea').forEach(t => t.disabled = true);
-        $add.disabled = true;
     });
-
-})();  
+})();

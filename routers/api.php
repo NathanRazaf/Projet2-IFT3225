@@ -11,4 +11,6 @@ if ($api_type === 'definitions') {
 
     include __DIR__ . '/../functions/api/add_score.php';
     exit;
+} else if ($api_type === 'add_def') {
+    include __DIR__ . '/../functions/api/add_definition.php';
 }
